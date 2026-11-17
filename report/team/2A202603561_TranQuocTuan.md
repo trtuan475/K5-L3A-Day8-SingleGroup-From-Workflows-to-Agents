@@ -29,8 +29,7 @@ Làm cá nhân: triển khai workflow, single-agent và orchestrator; tích hợ
 
 ## 5. Công cụ AI đã dùng
 
-Đã dùng Copilot SDK trong VS Code để hỗ trợ triển khai shape, viết test và rà contract/báo cáo. Kết quả được kiểm tra bằng pytest, benchmark public, crash suite, smoke test và `lab8.check_submission`; cần tự đọc hiểu code và có thể giải thích các quyết định trong ADR khi được hỏi.
-
+Đã dùng ChatGPT để viết test và rà contract/báo cáo. Kết quả được kiểm tra bằng pytest, benchmark public, crash suite, smoke test và `lab8.check_submission`
 ## 6. Tự đánh giá
 
 Giải pháp chọn workflow vì đạt kết quả public tương đương single và orchestrator với chi phí mô phỏng thấp nhất. Giới hạn hiện tại là chỉ có corpus public 14 claim; chưa có `student_drop` để tự kiểm hidden. MockLLM và cost mô phỏng không đại diện cho model hay chi phí sản xuất.
