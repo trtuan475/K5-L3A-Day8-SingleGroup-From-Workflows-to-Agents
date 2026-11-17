@@ -17,19 +17,19 @@ Phần này nối tiếp phần mini research ở buổi lý thuyết (slide 62�
 
 | Field | Hướng dẫn | Nhóm điền |
 | --- | --- | --- |
-| CÂU | R1 / R2 / R3 / R4 | |
-| SOURCE | Paper/blog, năm, URL, loại bằng chứng (benchmark, production report, blog kinh nghiệm) | |
-| CLAIM | Một kết luận gốc của nguồn. Không viết rộng hơn phạm vi paper | |
-| BOUNDARY | Model / dataset / setup giới hạn kết luận đó | |
-| HYPOTHESIS | Nếu đổi shape A→B (hoặc bật/tắt một thành phần), metric X sẽ đổi theo hướng nào, khoảng bao nhiêu | |
-| METHOD | Biến giữ cố định: model, tools, seed, corpus, giá, evaluator. Biến duy nhất được thay đổi: … | |
-| FAILURE / METRIC | Một lỗi dự kiến và cách đo nó: pass rate, pass^5, variance, cost/success, leak, bypass | |
+| CÂU | R1 / R2 / R3 / R4 | R2 · Failure taxonomy |
+| SOURCE | Paper/blog, năm, URL, loại bằng chứng (benchmark, production report, blog kinh nghiệm) | Cemri et al., “Why Do Multi-Agent LLM Systems Fail?”, 2025, https://arxiv.org/abs/2503.13657. Nghiên cứu thực nghiệm/preprint: taxonomy MAST xây từ trace MAS được gán nhãn. |
+| CLAIM | Một kết luận gốc của nguồn. Không viết rộng hơn phạm vi paper | Nguồn xác định 14 failure mode, gom thành 3 nhóm: system design issues, inter-agent misalignment và task verification; phân tích hơn 1,600 trace từ 7 framework. |
+| BOUNDARY | Model / dataset / setup giới hạn kết luận đó | Kết luận gốc thuộc các hệ thống/model/task trong MAST-Data; không chứng minh trực tiếp nguyên nhân trên claim giả lập này. Bộ lab chỉ có 14 claim public và MockLLM. |
+| HYPOTHESIS | Nếu đổi shape A→B (hoặc bật/tắt một thành phần), metric X sẽ đổi theo hướng nào, khoảng bao nhiêu | Với C-002/s55 cố định, tắt bước lấy delay từ ticket sẽ đổi kết quả sai `resolved, 20000` thành đúng `denied, 0`; model calls giữ nguyên, tool calls giảm 1 và cost giảm một tool call (10 VND mô phỏng). |
+| METHOD | Biến giữ cố định: model, tools, seed, corpus, giá, evaluator. Biến duy nhất được thay đổi: … | Giữ claim C-002, seed 55, shape swarm, MockLLM, bộ tool, world, giá và evaluator. Biến duy nhất: vô hiệu hóa `parse_delay_days` trong swarm để loại ticket override; số tool call và cost là metric đầu ra. |
+| FAILURE / METRIC | Một lỗi dự kiến và cách đo nó: pass rate, pass^5, variance, cost/success, leak, bypass | Lỗi task verification: ticket khai 5 ngày nhưng order là 2 ngày. Đo status, proposal/refund, model/tool calls và cost baseline so với treatment. |
 
 ## Kết quả ablation
 
-- Lệnh đã chạy (copy nguyên văn):
-- Run id / file report:
-- Kết quả so với hypothesis (đúng / sai / không kết luận được), kèm số liệu:
+- Lệnh đã chạy (copy nguyên văn): `python -m pytest -q tests/test_swarm_verification_ablation.py`
+- Run id / file report: Baseline benchmark `R-swarm-C-002-s55` trong `src/reports/benchmark.json`; treatment và đối chiếu trong `src/tests/test_swarm_verification_ablation.py`.
+- Kết quả so với hypothesis (đúng / sai / không kết luận được), kèm số liệu: Đúng. Baseline trả `resolved, 20000`; khi tắt duy nhất ticket override, treatment trả `denied, 0` và không ghi refund. Cả hai có 3 model calls; baseline có 6 tool calls và cost 62.22 VND, treatment 5 tool calls và 52.20 VND. Benchmark nền cũng cho thấy C-002/s55 là lỗi swarm duy nhất: pass rate 69/70 = 0.986, pass^5 = 13/14 = 0.929, variance theo seed = 0.000816. Phân loại task verification là nhận định của nhóm, không phải nhãn do paper gán.
 - Giới hạn: MockLLM không phải model sản xuất, latency là `unavailable`.
 
 Muốn đi xa hơn một ablation để lấy điểm cộng thì xem [docs/bonus_topics.md](../../docs/bonus_topics.md).
