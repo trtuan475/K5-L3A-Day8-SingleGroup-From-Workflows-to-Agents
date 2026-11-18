@@ -39,25 +39,40 @@ jobs:
       - run: uv pip install -r requirements.txt -r requirements-lab9.txt
       - run: python -m lab9.smoke
       - run: python -m pytest -q -m student -o addopts= -k "lab9 and not advanced"
-      - run: python -m lab9.evalset --check
+      - run: python -m lab9.evalset --check 
       - name: Evaluate and gate the PR swarm
         shell: bash
         run: |
           python -m lab9.eval --shape swarm --spec "$EVAL_SPEC" --out reports/eval_pr.json
-          python -m lab9.gate --pr reports/eval_pr.json --baseline "$EVAL_BASELINE" --spec "$EVAL_SPEC" --base-spec ../.base/src/config/metric_spec.yaml
+          if [[ -f ../.base/src/config/metric_spec.yaml ]]; then
+            python -m lab9.gate --pr reports/eval_pr.json --baseline "$EVAL_BASELINE" --spec "$EVAL_SPEC" --base-spec ../.base/src/config/metric_spec.yaml
+          else
+            python -m lab9.gate --pr reports/eval_pr.json --baseline "$EVAL_BASELINE" --spec "$EVAL_SPEC"
+          fi
       - name: Check the committed baseline and the M3 metric
         run: python -m lab9.ci_check --pr reports/eval_pr.json --baseline "$EVAL_BASELINE" --spec "$EVAL_SPEC"
       - name: Verify the gate accepts fixed
         shell: bash
         run: |
           python -m lab9.eval --shape fixed --spec "$EVAL_SPEC" --out reports/eval_fixed.json
-          python -m lab9.gate --pr reports/eval_fixed.json --baseline "$EVAL_BASELINE" --spec "$EVAL_SPEC" --base-spec ../.base/src/config/metric_spec.yaml
+          if [[ -f ../.base/src/config/metric_spec.yaml ]]; then
+            python -m lab9.gate --pr reports/eval_fixed.json --baseline "$EVAL_BASELINE" --spec "$EVAL_SPEC" --base-spec ../.base/src/config/metric_spec.yaml
+          else
+            python -m lab9.gate --pr reports/eval_fixed.json --baseline "$EVAL_BASELINE" --spec "$EVAL_SPEC"
+          fi
+      
       - name: Verify the gate blocks seeded_regression
         shell: bash
         run: |
           python -m lab9.eval --shape seeded_regression --spec "$EVAL_SPEC" --out reports/eval_seeded_regression.json
           gate_status=0
-          gate_output=$(python -m lab9.gate --pr reports/eval_seeded_regression.json --baseline "$EVAL_BASELINE" --spec "$EVAL_SPEC" --base-spec ../.base/src/config/metric_spec.yaml) || gate_status=$?
+
+          if [[ -f ../.base/src/config/metric_spec.yaml ]]; then
+            gate_output=$(python -m lab9.gate --pr reports/eval_seeded_regression.json --baseline "$EVAL_BASELINE" --spec "$EVAL_SPEC" --base-spec ../.base/src/config/metric_spec.yaml) || gate_status=$?
+          else
+            gate_output=$(python -m lab9.gate --pr reports/eval_seeded_regression.json --baseline "$EVAL_BASELINE" --spec "$EVAL_SPEC") || gate_status=$?
+          fi
+
           printf '%s\n' "$gate_output"
           # A Python exception can also exit 1. Require the explicit pass_rate verdict.
           if [[ "$gate_status" -ne 1 ]] || ! grep -Eq '^exit 1 — blocked: ([^,]+, )*pass_rate(, |$)' <<< "$gate_output"; then
